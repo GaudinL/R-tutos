@@ -1,0 +1,197 @@
+### School project with JVD from the RSM
+
+install.packages("ggplot2", dependencies = TRUE)
+library(ggplot2)
+
+# Load rcolorbrewer for color definitions
+install.packages("RColorBrewer", dependencies = TRUE)
+library(RColorBrewer)
+
+# Define the directory structure                    
+
+dir     <- "~/Documents/R"
+dirData <- paste0(dir, "Data/")
+dirProg <- paste0(dir, "Weekly exercises/Week45/")
+dirFig  <- paste0(dirProg, "Figures/")
+dirTbl  <- paste0(dirProg, "Tables/")
+dirTwt  <- paste0(dirProg, "Tweets/")
+dirLex  <- paste0(dirProg, "Lexicon/")
+
+install.packages("twitteR", dependencies = TRUE)
+library(twitteR)
+
+# If not done yet, set up your twitter business account and save your credentials in some R environment
+
+setup_twitter_oauth(consumer_key,consumer_secret,access_token,access_token_secret)
+
+# Collect 5000 tweets on AirBnb with searchTwitter
+
+myTweets <- searchTwitter("airbnb", lang="en", n = 5000)
+
+# Removing retweets (simple retweet: manual, modified tweet: mt)
+head(strip_retweets(myTweets,
+                    strip_manual=TRUE,
+                    strip_mt=TRUE)) # Those are actually the default arguments
+                    
+# Store tweets in data frame: twListToDF
+dsTweets <- twListToDF(strip_retweets(myTweets,
+                                        strip_manual=TRUE,
+                                        strip_mt=TRUE))
+# Remove duplicated tweets
+
+dsTweets <- dsTweets[!duplicated(dsTweets$text),]
+save(dsTweets, file = paste0(dirTwt, "AirbnbTweetsClean.Rda"))  
+
+
+# Load the tweets with the load function, and prepare the tweets for analysis, using
+# the pre-processing function in the tm package. Give a summary of the number of
+# words and documents in the resulting corpus
+
+load(file = paste0(dirTwt, "AirbnbTweetsClean.Rda"))
+install.packages("tm", dependencies = TRUE)
+library(tm)
+
+# Store the data, which is currently in a vector, in a so-called corpus
+vecData  <- VectorSource(dsTweets$text)
+myCorpus <- VCorpus(vecData, 
+                    readerControl = list(language="en"))
+
+# Create functions to remove hyperlinks and objects such as pictures
+removeLinks <- function(x) {
+  gsub("http[^[:blank:]]+", "", x)
+}
+
+removeNonPrintables <- function(x) {
+  gsub("[^[:graph:]]", " ", x)
+}
+
+# Remove non printable characters
+myCorpus <- 
+  tm_map(myCorpus, content_transformer(removeNonPrintables))
+#myCorpus[[2]]$content
+#myCorpus[[22]]$content
+
+
+# Remove links
+myCorpus <- 
+  tm_map(myCorpus, content_transformer(removeLinks))
+#myCorpus[[2]]$content
+#myCorpus[[22]]$content
+
+# Remove punctuation
+myCorpus <- tm_map(myCorpus, removePunctuation)
+#myCorpus[[2]]$content
+#myCorpus[[22]]$content
+
+
+# Remove numbers 
+myCorpus <- tm_map(myCorpus, removeNumbers)
+#myCorpus[[2]]$content
+#myCorpus[[22]]$content
+
+# Convert to lower case
+myCorpus <- 
+  tm_map(myCorpus, content_transformer(tolower))
+#myCorpus[[2]]$content
+#myCorpus[[22]]$content
+
+
+# Remove stop words
+myCorpus <- 
+  tm_map(myCorpus, removeWords, stopwords("english"))
+#myCorpus[[2]]$content
+#myCorpus[[22]]$content
+
+
+# Remove other words
+myCorpus <- 
+  tm_map(myCorpus, removeWords, c("the", "will", "amp", "get"))
+
+# Remove redundant white space
+myCorpus <- tm_map(myCorpus, stripWhitespace)
+
+# Stem words in the corpus
+myCorpus.tmp <- tm_map(myCorpus, stemDocument, language = "english")  
+
+#myCorpus.tmp[[2]]$content
+#myCorpus.tmp[[22]]$content
+
+
+# Make a document term matrix
+dtm <- DocumentTermMatrix(myCorpus)
+str(dtm)
+
+inspect(dtm[1:5,1:5])
+
+# High-level features of the corpus
+Docs(dtm)   # character vector of document id's
+nDocs(dtm)  # number of documents in corpus
+Terms(dtm)  # character vector with all terms
+nTerms(dtm) # number of terms
+
+
+findFreqTerms(dtm, 400)
+# [1] "airbnb" "travel"
+
+findAssocs(dtm, "airbnb", 0.15)
+# $airbnb
+#  strategy  teardown potential     looks     ahead    beyond 
+#      0.19      0.19      0.17      0.16      0.15      0.15 
+
+# For the thrill of using stargazer :D
+library(stargazer)
+assocs <-findAssocs(dtm, "airbnb", 0.15)
+stargazer(assocs$airbnb, align = TRUE, no.space = FALSE, df=FALSE, intercept.bottom=FALSE, type="html", out="assocAirbnb.doc")
+
+#################
+### WORDCLOUD ###
+#################
+
+install.packages("wordcloud", dependencies = TRUE)
+library(wordcloud)
+wordcloud(myCorpus, scale=c(5,0.5), min.freq=25, 
+          colors=brewer.pal(8,"Dark2"), 
+          random.order=FALSE)
+
+##########################
+### SENTIMENT ANALYSIS ###
+##########################
+
+positiveWords <- readLines("positive-words.txt") # Check the online documentation about TwittR for these files
+negativeWords <- readLines("negative-words.txt")
+
+# Store results
+dsSentiment <- data.frame(idTweet = 1:length(myCorpus), 
+                          nPositive = NA, 
+                          nNegative = NA, 
+                          nWords = NA)
+
+for (aTweet in 1:length(myCorpus)) {
+
+# Store texts as words in a vector
+words <- unlist(strsplit(myCorpus[[aTweet]]$content, " "))
+   
+# Determine the number of positive matches
+posWords <- sum(words %in% positiveWords)
+
+# Determine the number of negative matches
+negWords <- sum(words %in% negativeWords)
+   
+# Store resuslts
+dsSentiment$nPositive[aTweet] <- posWords; dsSentiment$nNegative[aTweet] <- negWords; dsSentiment$nWords[aTweet] <- length(words)
+}
+
+dsSentiment$difPosNeg   <- dsSentiment$nPositive - dsSentiment$nNegative
+dsSentiment$pctPositive <- dsSentiment$nPositive/dsSentiment$nWords
+dsSentiment$pctOpinion  <- (dsSentiment$nPositive+dsSentiment$nNegative)/dsSentiment$nWords
+dsSentiment$pctPosNeg <- dsSentiment$difPosNeg*100/dsSentiment$nWords
+
+hist(dsSentiment$pctPosNeg,
+     col = "blue", las = 1, 
+     ylim = c(0, 2000), xlab = "% Positive - % Negative")
+
+# Summary stats
+library(psych)
+#library(stargazer)
+pctPosNeg <- data.frame(dsSentiment$pctPosNeg)
+stargazer(pctPosNed, summary=TRUE, align=TRUE, no.space=FALSE, type="html", out="rebelote.doc")
