@@ -1,0 +1,23 @@
+# install.packages("readr")
+library(readr)
+
+# Store somewhere in your wd
+National_2018_Import <- read_delim("Documents/R/National_2018_Import.txt",";", escape_double = FALSE, col_names = FALSE, col_types = cols(X1 = col_skip(), X10 = col_skip(), X4 = col_skip(), X5 = col_skip()), trim_ws = TRUE)
+ceramics_imports <- National_2018_Import[which(National_2018_Import$X6 < 69080000 & National_2018_Import$X6 > 69069999),]
+write.csv(ceramics_imports, file="imp_ceramique.csv")
+write.csv2(ceramics_imports, file="imports_bis.csv") # Semicolon separated
+
+# Grouping according to a list
+nordics <- c("SE", "NO", "FI", "DK", "IS")
+# First method
+nordics_imports <- National_2018_Import[which(National_2018_Import$X7 in nordics),]
+# Second method
+nordics_imports <- subset.data.frame(National_2018_Import, National_2018_Import$X7 %in% nordics)
+
+# Creating a useless column
+nordics_imports$issweden <- ifelse(nordics_imports$X7 =="SE", TRUE, FALSE)
+# Alternatively,
+# nordics_imports$issweden <- nordics_imports[which(nordics_imports$X7 =="SE", TRUE, FALSE),]
+
+# Removing the useless column
+nordics_imports$issweden <- NULL
