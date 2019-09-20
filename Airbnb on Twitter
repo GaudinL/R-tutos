@@ -195,3 +195,22 @@ library(psych)
 #library(stargazer)
 pctPosNeg <- data.frame(dsSentiment$pctPosNeg)
 stargazer(pctPosNed, summary=TRUE, align=TRUE, no.space=FALSE, type="html", out="rebelote.doc")
+
+# Association rules
+
+install.packages("arules", dependencies = TRUE)
+library("arules")
+install.packages("arulesViz", dependencies = TRUE)
+library(arulesViz)
+
+# Let's use a 0.05 threshold
+myRules <- apriori(matrixDtm, parameter = list(support=0.05, confidence=0.05, minlen=2, maxlen = 3, target="rules"))
+
+# Top 10 by confidence
+inspect(head(sort(myRules, by ="confidence"), 10))
+
+# Plots
+plot(myRules)                # Yikes
+plot(myRules, measure=c("support", "lift"), shading="confidence")
+plot(myRules, shading = "order", control = list(main = "Two-key plot"))
+plot(myRules, method = "grouped")
