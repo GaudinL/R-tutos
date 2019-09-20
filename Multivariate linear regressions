@@ -1,0 +1,36 @@
+# Load the iris dataset
+data(iris)
+view(iris)                    # Dataset looks complete
+
+iris_model <- Sepal.Length ~ Petal.Length + Petal.Width + factor(Species)
+iris_reg <- lm(iris_model, data=iris)
+summary.lm(iris_reg)          # Well well this looks good
+
+# install.packages("stargazer", dependencies = TRUE)
+library(stargazer)
+stargazer(iris_reg, summary=TRUE, align=TRUE, no.space=FALSE, type="html", out="regression summary.doc")
+
+# Let's try to improve our model a bit
+iris_model2 <- Sepal.Length ~ Petal.Length + factor(Species)
+iris_reg2 <- lm(iris_model2, data=iris)
+summary.lm(iris_reg2)        # Meh, we just slightly improve the adj R squared
+
+# Making predictions
+newflower <- list(Petal.Length=1.6,Petal.Width=0.2, Species="setosa")
+predict.lm(iris_reg, newdata=newflower)
+#       1 
+#5.131296 
+predict.lm(iris_reg2, newdata=newflower)
+#      1 
+# 5.13083                   # Pretty much the same
+
+# Anova comp
+anova(iris_reg, iris_reg2)
+# Analysis of Variance Table
+
+# Model 1: Sepal.Length ~ Petal.Length + Petal.Width + factor(Species)
+# Model 2: Sepal.Length ~ Petal.Length + factor(Species)
+#   Res.Df    RSS Df   Sum of Sq      F Pr(>F)
+# 1    145 16.681                             
+# 2    146 16.682 -1 -0.00016936 0.0015 0.9694      
+# Quick analysis: th p-value of the F-stat is very high, hence removing one variable didn't really improve the model
