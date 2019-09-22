@@ -16,15 +16,6 @@ iris_reg2 <- lm(iris_model2, data=iris)
 summary.lm(iris_reg2)        # Meh, we just slightly improve the adj R squared
 stargazer(iris_reg, iris_reg2, summary=TRUE, align=TRUE, df = TRUE, intercept.bottom = FALSE, no.space=TRUE, type="html", out="regression comparison.doc")
 
-# Regression tree
-# install.packages("rpart")
-# install.packages("rpart.plot")
-library(rpart)
-library(rpart.plot)
-simple_model <- Sepal.Length ~ Species
-tree <- rpart(simple_model, data=iris, method="class", parms = list(split = "information"))
-rpart.plot(tree, extra=101)                    # This basically gives us the frequency of each species in the sample and the average sepal length by species
-dev.off()
 
 # Making predictions
 newflower <- list(Petal.Length=1.6,Petal.Width=0.2, Species="setosa")
@@ -45,3 +36,42 @@ anova(iris_reg, iris_reg2)
 # 1    145 16.681                             
 # 2    146 16.682 -1 -0.00016936 0.0015 0.9694      
 # Quick analysis: th p-value of the F-stat is very high, hence removing one variable didn't really improve the model
+
+
+# Regression tree
+# install.packages("rpart")
+# install.packages("rpart.plot")
+library(rpart)
+library(rpart.plot)
+simple_model <- Sepal.Length ~ Species
+tree <- rpart(simple_model, data=iris, method="class", parms = list(split = "information"))
+rpart.plot(tree, extra=101)                    # This basically gives us the frequency of each species in the sample and the average sepal length by species
+dev.off()
+
+# Checking the accuracy of the regression tree (CAUTION I HAVEN'T TESTED THIS CODE)
+yvalue <- iris$Sepal.Length   # Actual obs
+medianlength <- median(iris$Sepal.Length)
+yvalue <- ifelse(iris$Sepal.Length > median, 1, 0)
+ypred <- predict(tree, type = "vector")
+ypred <- as.numeric(ypred> 0.5)
+
+# Confusion matrix
+table(Predicted= ypred, Observed = yvalue)
+
+# Perf measures
+P <- sum(yvalue == 1)
+N <- sum(yvalue == 0)
+A <- P + N
+
+TP <- sum((ypred == 1)*(yvalue == 1))
+FP <- sum((ypred == 1)*(yvalue == 0))
+
+TN <- sum((ypred == 0)*(yvalue == 0))
+FN <- sum((ypred == 0)*(yvalue == 1))
+
+options(digits=3)
+cbind(Accuracy = (TP + TN)/(P+N),
+      Specificity.TNR = TN/(FP+TN),
+      Sensitivity.TPR = TP/(FN+TP),
+      FPR = FP/(FP+TN),
+      Precision = TP/(FP + TP))
