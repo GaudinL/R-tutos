@@ -51,9 +51,9 @@ dev.off()
 # Checking the accuracy of the regression tree (CAUTION I HAVEN'T TESTED THIS CODE)
 yvalue <- iris$Sepal.Length   # Actual obs
 medianlength <- median(iris$Sepal.Length)
-yvalue <- ifelse(iris$Sepal.Length > median, 1, 0)
+yvalue <- ifelse(iris$Sepal.Length > medianlength, 1, 0)
 ypred <- predict(tree, type = "vector")
-ypred <- as.numeric(ypred> 0.5)
+ypred <- as.numeric(ypred> medianlength)
 
 # Confusion matrix
 table(Predicted= ypred, Observed = yvalue)
