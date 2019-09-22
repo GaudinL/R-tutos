@@ -11,7 +11,7 @@ library(stargazer)
 stargazer(iris_reg, summary=TRUE, align=TRUE, df = TRUE, intercept.bottom = FALSE, no.space=TRUE, type="html", out="regression summary.doc")
 
 # Let's try to improve our model a bit
-iris_model2 <- Sepal.Length ~ Petal.Length + factor(Species)
+iris_model2 <- Sepal.Length ~ Petal.Length + Species    # After str(iris$Species) we find that the data are already stored as factors
 iris_reg2 <- lm(iris_model2, data=iris)
 summary.lm(iris_reg2)        # Meh, we just slightly improve the adj R squared
 stargazer(iris_reg, iris_reg2, summary=TRUE, align=TRUE, df = TRUE, intercept.bottom = FALSE, no.space=TRUE, type="html", out="regression comparison.doc")
@@ -21,8 +21,10 @@ stargazer(iris_reg, iris_reg2, summary=TRUE, align=TRUE, df = TRUE, intercept.bo
 # install.packages("rpart.plot")
 library(rpart)
 library(rpart.plot)
-tree <- rpart(iris_model, data=iris, method="class", parms = list(split = "information"))
-rpart.plot(tree)
+simple_model <- Sepal.Length ~ Species
+tree <- rpart(simple_model, data=iris, method="class", parms = list(split = "information"))
+rpart.plot(tree, extra=101)                    # This basically gives us the frequency of each species in the sample and the average sepal length by species
+dev.off()
 
 # Making predictions
 newflower <- list(Petal.Length=1.6,Petal.Width=0.2, Species="setosa")
