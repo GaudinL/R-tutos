@@ -46,7 +46,6 @@ library(rpart.plot)
 simple_model <- Sepal.Length ~ Species
 tree <- rpart(simple_model, data=iris, method="class", parms = list(split = "information"))
 rpart.plot(tree, extra=101)                    # This basically gives us the frequency of each species in the sample and the average sepal length by species
-dev.off()
 
 # Checking the accuracy of the regression tree (CAUTION I HAVEN'T TESTED THIS CODE)
 yvalue <- iris$Sepal.Length   # Actual obs
