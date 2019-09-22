@@ -8,12 +8,21 @@ summary.lm(iris_reg)          # Well well this looks good
 
 # install.packages("stargazer", dependencies = TRUE)
 library(stargazer)
-stargazer(iris_reg, summary=TRUE, align=TRUE, no.space=FALSE, type="html", out="regression summary.doc")
+stargazer(iris_reg, summary=TRUE, align=TRUE, df = TRUE, intercept.bottom = FALSE, no.space=TRUE, type="html", out="regression summary.doc")
 
 # Let's try to improve our model a bit
 iris_model2 <- Sepal.Length ~ Petal.Length + factor(Species)
 iris_reg2 <- lm(iris_model2, data=iris)
 summary.lm(iris_reg2)        # Meh, we just slightly improve the adj R squared
+stargazer(iris_reg, iris_reg2, summary=TRUE, align=TRUE, df = TRUE, intercept.bottom = FALSE, no.space=TRUE, type="html", out="regression comparison.doc")
+
+# Regression tree
+# install.packages("rpart")
+# install.packages("rpart.plot")
+library(rpart)
+library(rpart.plot)
+tree <- rpart(iris_model, data=iris, method="class", parms = list(split = "information"))
+rpart.plot(tree)
 
 # Making predictions
 newflower <- list(Petal.Length=1.6,Petal.Width=0.2, Species="setosa")
