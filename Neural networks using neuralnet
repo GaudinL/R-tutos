@@ -1,0 +1,17 @@
+# Load that data set on Portuguese wines
+wine <- read.csv2("https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv", stringsAsFactors = FALSE, dec = ".")
+# Note: maybe because the Portuguese use commas for decimals, I had to set full stops as decimals to avoid loading numerics as chars
+
+# I didn't iterate too much, I stopped at the following model:
+wine_model <- quality ~ volatile.acidity + chlorides + pH + sulphates + alcohol
+wine_reg <- lm(wine_model, data=wine)
+summary(wine_reg)
+
+# install.packages("neuralnet", dependencies = TRUE)
+library(neuralnet)
+wine_nn <- neuralnet(wine_model, data=wine, hidden=c(3, 2), linear.output = FALSE)      
+plot(wine_nn)
+
+# Making predictions
+newwine <- list(volatile.acidity=0.660, chlorides=0.073, pH=3.40, sulphates=0.75, alcohol=10.2)
+pred <- predict.nn(wine_nn, newwine)
