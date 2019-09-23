@@ -3,18 +3,34 @@ data(iris)
 view(iris)                    # Dataset looks complete
 
 iris_model <- Sepal.Length ~ Petal.Length + Petal.Width + factor(Species)
+iris_model_no_intercept <- Sepal.Length ~ Petal.Length + Petal.Width + factor(Species) - 1
 iris_reg <- lm(iris_model, data=iris)
 summary.lm(iris_reg)          # Well well this looks good
 
 # install.packages("stargazer", dependencies = TRUE)
 library(stargazer)
-stargazer(iris_reg, summary=TRUE, align=TRUE, df = TRUE, intercept.bottom = FALSE, no.space=TRUE, type="html", out="regression summary.doc")
+stargazer(iris_reg, summary=TRUE, align=TRUE, df = TRUE, intercept.bottom = FALSE, no.space=TRUE, 
+          type="html", out="regression summary.doc")
+# stargazer(iris_reg, summary=TRUE, align=TRUE, df = TRUE, intercept.bottom = FALSE, no.space=TRUE, 
+          type="latex", out="regression summary.tex")          
+
+# Let's get the 90% confidence interval of the regression coefficients and intercept
+# Degrees of freedom = n of observations - 1
+# The second column of the summary is the standard error of the coeffs
+CI_lower <- coefficients(iris_reg) - qt(0.05, df=149)*summary(iris_reg)$coefficients[,2]
+CI_upper <- coefficients(iris_reg) + qt(0.05, df=149)*summary(iris_reg)$coefficients[,2]
+# Or else: confint(wine_reg, level=0.90)
+stargazer(iris_reg, CI_lower, CI_upper, title="Regression  coefficients (with 90% confidence intervals)", 
+          column.labels = c("Summary", "Lower limit", "Upper limit"), 
+          align=TRUE, no.space=TRUE,
+          type = "html", out="Regression coeffs.doc")
 
 # Let's try to improve our model a bit
 iris_model2 <- Sepal.Length ~ Petal.Length + Species    # After str(iris$Species) we find that the data are already stored as factors
 iris_reg2 <- lm(iris_model2, data=iris)
 summary.lm(iris_reg2)        # Meh, we just slightly improve the adj R squared
-stargazer(iris_reg, iris_reg2, summary=TRUE, align=TRUE, df = TRUE, intercept.bottom = FALSE, no.space=TRUE, type="html", out="regression comparison.doc")
+stargazer(iris_reg, iris_reg2, summary=TRUE, align=TRUE, df = TRUE, intercept.bottom = FALSE, no.space=TRUE, 
+          type="html", out="regression comparison.doc")
 
 
 # Making predictions
