@@ -1,0 +1,52 @@
+data(airquality)
+View(airquality)   # Few NAs around
+airquality <- na.omit(airquality)
+
+air_model <- Ozone ~ Solar.R + Wind + Temp
+air_reg <- lm(air_model, data=airquality)
+summary(air_reg)                                     # Could maybe be improved
+air_model2 <- Ozone ~ Wind + Temp + Solar.R:Temp     # Solar.R as a moderating variable of Temp -> Ozone
+air_reg2 <- lm(air_model2, data=airquality)
+summary(air_reg2)
+air_model3 <- Ozone ~ Wind + Temp + Solar.R:Temp - 1    # Without intercept
+air_reg3 <- lm(air_model3, data=airquality)
+summary(air_reg3)                                       # Oh wow
+
+anova(air_reg2, air_reg3)                            # We improved the model but only at a significance level of 90%
+
+# Splitting the data in a training and testing set (80-20)
+samp <- sample((1:nrow(airquality),ceiling(0.8*nrow(airquality)))
+samp <- sort(samp)                                  # This returns a list of row numbers
+training <- airquality[samp,]
+testing <- airquality[-samp,]
+
+air_train3 <- lm(air_model3, data=training)
+
+# Let's train a classification tree
+# install.packages("rpart", dependencies=TRUE)
+library(rpart)
+air_tree3 <- rpart(air_model3, data=training, method="class", parms = list(split = "information"))
+
+# Prediction
+y_true <- testing$Ozone
+y_reg <- predict(air_train3, testing)
+y_tree <- predict(air_tree3, testing)[,2]
+
+# Compare prediction results and true values 
+# install.packages("ROCR", dependencies=TRUE)
+library(ROCR)
+pred.Reg  <- prediction(y_reg,  y_true)
+pred.Tree  <- prediction(y_tree,  y_true)
+
+# True positives and false pos
+perf.Reg <- performance(pred.Reg,  measure = "tpr", x.measure = "fpr")
+perf.Tree  <- performance(pred.Tree,  measure = "tpr", x.measure = "fpr")
+
+# Combined ROC Curves plot
+plot(perf.Reg,  lty = 1, lwd = 2.0, col = "red")
+plot(perf.Tree,  lty = 1, lwd = 2.0, col = "blue", add = TRUE)
+
+abline(a = 0, b = 1, lty = 3, lwd = 1.5)
+mtext("Sample performance linear regression and classification tree (80-20%)", side = 3)
+legend(0.6,0.5, c("Regression", "Tree"),
+       col = c("red","blue"), lwd=3)
