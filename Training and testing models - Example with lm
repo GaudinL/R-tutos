@@ -1,4 +1,4 @@
-data(airquality)
+data("airquality")
 View(airquality)   # Few NAs around
 airquality <- na.omit(airquality)
 
@@ -12,7 +12,7 @@ air_model3 <- Ozone ~ Wind + Temp + Solar.R:Temp - 1    # Without intercept
 air_reg3 <- lm(air_model3, data=airquality)
 summary(air_reg3)                                       # Oh wow
 
-anova(air_reg2, air_reg3)                            # We improved the model but only at a significance level of 90%
+anova(air_reg2, air_reg3)                            # We improved the model but only at a significance level of 10% (one *)
 
 # Splitting the data in a training and testing set (80-20)
 samp <- sample((1:nrow(airquality),ceiling(0.8*nrow(airquality)))
