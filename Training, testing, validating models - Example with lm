@@ -50,3 +50,57 @@ abline(a = 0, b = 1, lty = 3, lwd = 1.5)
 mtext("Sample performance linear regression and classification tree (80-20%)", side = 3)
 legend(0.6,0.5, c("Regression", "Tree"),
        col = c("red","blue"), lwd=3)
+
+# k fold cross-validation
+# with 5 folds
+k <- 5
+
+folds <- sample(1:k, nrow(airquality), replace = TRUE)
+
+# Make an empty list to store the results
+rslt <- list()
+
+for (fold in 1:k) {
+  air_train <- airquality[folds != fold,]
+  air_test  <- airquality[folds == fold,]
+  
+  
+  air_train3 <- lm(air_model3, data=training)     # This is the trained linear regression model
+  air_tree3 <- rpart(air_model3, data=training, method="class", parms = list(split = "information"))
+  
+  y_true  <- air_test$Ozone   # Observed pollution levels
+  
+  y_reg <- predict(air_train3, air_test)
+  y_tree <- predict(air_tree3, air_test)[,2]
+  
+  rslt$Reg$predicted[[fold]] <- unname(predLog.Test)
+  rslt$Reg$observed[[fold]]  <- y_true
+  
+  rslt$Tree$predicted[[fold]] <- unname(predTree.Test)
+  rslt$Tree$observed[[fold]]  <- y_true
+}
+
+str(rslt)
+
+predReg  <- rslt$Reg$predicted
+ytrueReg  <- rslt$Reg$observed
+
+predTree <- rslt$Tree$predicted
+ytrueTree <- rslt$Tree$observed
+
+# library(ROCR)
+pred_Reg <- prediction(predReg, ytrueReg)
+perf_Reg <- performance(pred.Reg, "tpr", "fpr")
+
+pred_Tree <- prediction(predTree, ytrueTree)
+perf_Tree <- performance(pred.Tree, "tpr", "fpr")
+
+# Make a plot out of this
+plot(perf_Reg,  avg= "threshold", lty = 1, lwd = 2.0, col = "blue", add = TRUE)
+plot(perf_Tree, avg= "threshold", lty = 1, lwd = 2.0, col = "red", add = TRUE)
+
+mtext(paste0(k,"-folds cross validation"), side = 3)
+legend(0.6,0.5, c("Regression", "Tree"),
+       col = c("blue", "red"), lwd=3)
+
+
