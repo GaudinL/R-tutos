@@ -1,3 +1,5 @@
+# Here we use the sales example.csv file where we manually forecast monthly sales in the Pred_seas column
+# Note that I changed the decimal separator from "." to "," to import the file
 library(readr)
 sales_example <- read_delim("sales example.csv", ";", escape_double = FALSE, locale = locale(decimal_mark = ","), trim_ws = TRUE)
 
